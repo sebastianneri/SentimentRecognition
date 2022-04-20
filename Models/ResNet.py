@@ -5,16 +5,15 @@ from keras.initializers import glorot_uniform, he_uniform
 
 
 class ResNet:
-    def __init__(self, input_shape, output_shape, classes, resnet_type):        
+    def __init__(self, input_shape, classes, resnet_type):        
         self.input_shape = input_shape
-        self.output_shape = output_shape
         self.resnet_type = resnet_type
         self.classes = classes
         self.X_input = Input(self.input_shape)        
-        self.X = ZeroPadding2D((3, 3))(self.X _input)
+        self.X = ZeroPadding2D((3, 3))(self.X_input)
         self.model = self.build_model()
 
-    def first_stage(self);
+    def first_stage(self):
         self.X = Conv2D(filters=64, kernel_size = (7, 7), strides = (2, 2), name="conv1", kernel_initializer=he_uniform(seed=0))(self.X )
         self.X = BatchNormalization(axis=3, name="conv1_B1")(self.X)
         self.X = Activation("relu")(self.X)
@@ -22,23 +21,23 @@ class ResNet:
 
     def second_stage(self):
         self.X = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), name="conv2_1")(self.X)
-        self.X = convolutional_block(self.X, (64, 64, 256), stage=2, count=2, strides=(1, 1, 1))
-        self.X = identity_block(self.X, (64, 64, 256), stage=2, block_size=2, count=3, strides=(1, 1, 1))
+        self.X = self.convolutional_block(self.X, (64, 64, 256), stage=2, count=2, strides=(1, 1, 1))
+        self.X = self.identity_block(self.X, (64, 64, 256), stage=2, block_size=2, count=3, strides=(1, 1, 1))
         return 
     
     def third_stage(self):
-        self.X = convolutional_block(self.X, (128, 128, 512), stage=3, count=1, strides=(2, 1, 1))
-        self.X = identity_block(self.X, (128, 128, 512), stage=3, block_size=3, count=2, strides=(1, 1, 1))
+        self.X = self.convolutional_block(self.X, (128, 128, 512), stage=3, count=1, strides=(2, 1, 1))
+        self.X = self.identity_block(self.X, (128, 128, 512), stage=3, block_size=3, count=2, strides=(1, 1, 1))
         return 
 
     def fourth_stage(self):
-        self.X = convolutional_block(self.X, (256, 256, 1024), stage=4, count=1, strides=(2, 1, 1))
-        self.X = identity_block(self.X, (256, 256, 1024), stage=4, block_size=5, count=2, strides=(1, 1, 1))
+        self.X = self.convolutional_block(self.X, (256, 256, 1024), stage=4, count=1, strides=(2, 1, 1))
+        self.X = self.identity_block(self.X, (256, 256, 1024), stage=4, block_size=5, count=2, strides=(1, 1, 1))
         return
 
     def fifth_stage(self):
-        self.X = convolutional_block(self.X, (512, 512, 2048), stage=5, count=1, strides=(2, 1, 1))
-        self.X = identity_block(self.X, (512, 512, 2048), stage=5, block_size=2, count=2, strides=(1, 1, 1))
+        self.X = self.convolutional_block(self.X, (512, 512, 2048), stage=5, count=1, strides=(2, 1, 1))
+        self.X = self.identity_block(self.X, (512, 512, 2048), stage=5, block_size=2, count=2, strides=(1, 1, 1))
         return
     
     def sixth_stage(self):
@@ -46,18 +45,17 @@ class ResNet:
         self.X = Flatten()(self.X)
         self.X = Dense(units = 256, activation = 'relu')(self.X)
         if self.classes > 1:
-            activation = "softmax
+            activation = "softmax"
         else:
             activation = "sigmoid"
-        self.X = Dense(1, activation=activation, name= f"fc_{self.classes}", kernel_initializer = glorot_uniform(seed=0))(self.X)
+        self.X = Dense(self.classes, activation=activation, name= f"fc_{self.classes}", kernel_initializer = glorot_uniform(seed=0))(self.X)
         return
     
-    def identity_block(X, filters, stage, count, block_size, strides):
-          f1, f2, f3 = filters
-          s1, s2, s3 = strides
-          X_shortcut = X
-
-          for i in range(block_size):
+    def identity_block(self, X, filters, stage, count, block_size, strides):
+        f1, f2, f3 = filters
+        s1, s2, s3 = strides
+        X_shortcut = X
+        for i in range(block_size):
             X = Conv2D(filters=f1, kernel_size=(1, 1), strides = (s1, s1), padding="valid", kernel_initializer = he_uniform(seed=0), name = f"conv{stage}_{count}")(X)
             X = BatchNormalization(axis=3, name= f"conv{stage}_B{count}")(X)
             X = Activation("relu")(X)
@@ -74,8 +72,7 @@ class ResNet:
 
             return X
 
-    def convolutional_block(X, filters, stage, count, strides):
-      
+    def convolutional_block(self, X, filters, stage, count, strides):
       f1, f2, f3 = filters
       s1, s2, s3 = strides
       X_shortcut = X
@@ -105,6 +102,6 @@ class ResNet:
         self.fourth_stage()
         self.fifth_stage()
         self.sixth_stage()
-        return Model(inputs = self.X_input, outputs = self.X, name='ResNet50')
+        return Model(inputs = self.X_input, outputs = self.X, resnet_type)
 
         
